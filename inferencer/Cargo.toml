@@ -1,0 +1,37 @@
+[package]
+authors = ["Boris Albar <boris.a@sleipnir.fr>"]
+name = "chessformer-inferencer"
+version = "0.1.0"
+description = "Transformer the chess."
+repository = ""
+readme = "README.md"
+keywords = ["chess", "mcts", "transformer"]
+categories = ["algorithms"]
+license = "MIT"
+
+[dependencies]
+mcts =  { path = "/home/balbar/Projets/chessformer/libs/mcts" }
+tensorrt-rs = {path = "/home/balbar/Projets/chessformer/libs/tensorrt-rs/tensorrt"}
+chess = "3.1.1"
+intmap = "0.7.0"
+ndarray = { version = "0.15.1", features = ["blas", "rayon"] }
+ndarray-npy = "0.8.0"
+rand = "0.8.3"
+rand_distr = "0.4.0"
+cached = "0.23.0"
+glob = "*"
+clap = "*"
+shakmaty = "0.17.2"
+shakmaty-syzygy = "0.14.0"
+#nix = "*"
+parking_lot_core = "0.8.2"
+parking_lot = "0.11.1"
+
+[build]
+rustflags = ["-Ctarget-cpu=native"]
+
+[profile.release]
+lto = true
+codegen-units = 1
+debug = false
+opt-level = 3

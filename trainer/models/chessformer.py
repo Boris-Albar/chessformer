@@ -68,12 +68,14 @@ class Chessformer(pl.LightningModule):
         return x
 
     def training_step(self, batch, batch_idx):
+
         # training_step defined the train loop. It is independent of forward
         board, result, moves = batch
         x = self.forward(board)
 
         loss = self.loss(x, result, moves, num_moves=self.num_classes)
-        self.log('train_loss', loss)
+        self.log('train_loss', loss, sync_dist=True)
+
         return loss
 
     '''def configure_optimizers(self):
@@ -95,7 +97,7 @@ class Chessformer(pl.LightningModule):
     def save_to_onnx(self, filepath):
         random_batch = torch.zeros([4, 65, 15], dtype=torch.float).cuda()
         self.to_onnx(filepath, random_batch, export_params=True,
-            opset_version=11, do_constant_folding=False,
+            opset_version=10, do_constant_folding=True,
             input_names=["input_board"], output_names=["output_moves"],
             dynamic_axes={'input_board': {0: 'sequence'}, 'output_moves': {0: 'sequence'}})
 

@@ -162,7 +162,7 @@ fn simulate_game(thread_number: u64,
         }
     }
 
-    let mut file_boards = File::create(game_path.to_owned() + "/game_boards_" + &thread_number.to_string() + "_" + &game_number.to_string() + ".txt").expect("Unable to create board file");
+    let mut file_boards = File::create(game_path.to_owned() + "/game_boards_" + runner_name +  "_" + &thread_number.to_string() + "_" + &game_number.to_string() + ".txt").expect("Unable to create board file");
     for i in &vector_fen{
         write!(&mut file_boards, "{:?}\n", *i).expect("Unable to write data!");
     }
@@ -299,14 +299,14 @@ fn main() {
     let stochastic_temperature: f64 = matches.value_of("stochastic_temperature").unwrap_or("1.0").parse().unwrap_or(1.0);
     let dirichlet_alpha: f64 = matches.value_of("dirichlet_alpha").unwrap_or("0.3").parse().unwrap_or(0.3);
     let dirichlet_epsilon: f64 = matches.value_of("dirichlet_epsilon").unwrap_or("0.25").parse().unwrap_or(0.25);
-    let policy_temperature: f64 = matches.value_of("policy_temperature").unwrap_or("0.25").parse().unwrap_or(0.67);
+    let policy_temperature: f64 = matches.value_of("policy_temperature").unwrap_or("0.75").parse().unwrap_or(0.75);
     let syzygy_path = Arc::new(matches.value_of("syzygy_path").unwrap_or(""));
     let syzygy_stopping = matches.is_present("syzygy_stopping");
     let batch_size: usize = matches.value_of("batch_size").unwrap_or("1").parse().unwrap_or(1);
     let timeout: u64 = matches.value_of("timeout").unwrap_or("100").parse().unwrap_or(20);
     let enable_cache = matches.is_present("enable_cache");
     let cache_size: usize = matches.value_of("cache_size").unwrap_or("2048").parse().unwrap_or(2048);
-    let max_games: usize = matches.value_of("max_games").unwrap_or("0").parse().unwrap_or(0);
+    let max_games: usize = matches.value_of("max_games").unwrap_or("0").parse().unwrap_or(0) / parallel_games;
     let gpu_number: u64 = matches.value_of("gpu_number").unwrap_or("0").parse().unwrap_or(0);
 
     assert!(batch_size <= ((parallel_games as usize) * mcts_threads),

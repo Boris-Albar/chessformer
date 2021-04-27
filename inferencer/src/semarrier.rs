@@ -1,10 +1,9 @@
 extern crate parking_lot;
-use std::sync::atomic::{AtomicUsize, Ordering};
-use parking_lot::{Condvar, Mutex, WaitTimeoutResult};
+use parking_lot::{Condvar, Mutex};
 
 use std::cmp;
-use std::time::{Instant, Duration};
-use std::sync::{atomic, Arc};
+use std::time::Duration;
+use std::sync::atomic;
 
 use std::ops::Drop;
 /*use std::sync::{Condvar, Mutex};*/

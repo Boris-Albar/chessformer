@@ -118,21 +118,22 @@ impl Evaluator<ChessformerTrtMCTS> for NNTrtEvaluator {
         // get value from the neural network
         let mut state_eval = tanh(output[output.shape()[0] - 1]) as f64;
 
+        // reverse policy for black
+        if self.root_player == chess::Color::Black {
+            state_eval = -1.0 * state_eval;
+        }
+
         // if syzygy is enabled, correct the evaluation if possible
         let syzygy_wtz_value = state.get_syzygy_wdl();
         if syzygy_wtz_value != -5.0 {
             state_eval = syzygy_wtz_value;
         }
 
-        // reverse evaluation for policy
-        if self.root_player == chess::Color::Black {
-            state_eval = -1.0 * state_eval;
-        }
-
         (vec_moves, state_eval)
     }
 
     fn interpret_evaluation_for_player(&self, evaln: &f64, _player: &chess::Color) -> i64 {
+
 		let adj_eval;
 
 		if *_player == self.root_player {
