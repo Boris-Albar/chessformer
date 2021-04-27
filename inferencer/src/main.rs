@@ -306,7 +306,7 @@ fn main() {
     let timeout: u64 = matches.value_of("timeout").unwrap_or("100").parse().unwrap_or(20);
     let enable_cache = matches.is_present("enable_cache");
     let cache_size: usize = matches.value_of("cache_size").unwrap_or("2048").parse().unwrap_or(2048);
-    let max_games: usize = matches.value_of("max_games").unwrap_or("0").parse().unwrap_or(0) / parallel_games;
+    let max_games: usize = matches.value_of("max_games").unwrap_or("0").parse().unwrap_or(0) / (parallel_games as usize);
     let gpu_number: u64 = matches.value_of("gpu_number").unwrap_or("0").parse().unwrap_or(0);
 
     assert!(batch_size <= ((parallel_games as usize) * mcts_threads),
