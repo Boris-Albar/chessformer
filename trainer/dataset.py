@@ -8,15 +8,27 @@ import random
 import chess
 
 class ChessDataset(Dataset):
-    def __init__(self, path, history=-1, sub_sampling=32):
+    def __init__(self, path, history=-1, sub_sampling=32, use_random_mirorring=False):
 
         self.path = path
         self.history = history
         self.sub_sampling = sub_sampling
+        self.use_random_mirorring = use_random_mirorring
 
         self.file_list = sorted(glob.glob(self.path + '/*.txt'))[max(0, -self.history):]
         if self.history != -1:
             self.file_list = file_list[max(-len(file_list), -self.history):]
+
+    def mirror_moves(self, moves):
+        standard_moves = moves[:4096].reshape((64,64))
+        standard_moves = np.flip(standard_moves, axis=0)
+        standard_moves = standard_moves.reshape((4096,))
+
+        promotion_white = moves[4096:4162]
+        promotion_black = moves[4162:]
+
+        mirror_moves = np.concatenate([standard_moves, promotion_black, promotion_white], axis=0)
+        return mirror_moves
 
     def __len__(self):
         return len(self.file_list)
@@ -41,6 +53,10 @@ class ChessDataset(Dataset):
             board, repeat, fiftyrule = board.replace('"', '').split("--")
             board_chess = chess.Board(board)
 
+            to_mirror = random.choice([True, False])
+            if self.use_random_mirorring == True and to_mirror == True:
+                board_chess = board_chess.mirror()
+
             board_numpy = np.zeros((65, 15))
 
             piece_board = []
@@ -64,15 +80,23 @@ class ChessDataset(Dataset):
 
             torch_boards.append(board_numpy)
 
+            game_result = 0.0
             if match_result == "WhiteWon":
-                result.append(1.0)
+                game_result = 1.0
             elif match_result == "BlackWon":
-                result.append(-1.0)
-            else:
-                result.append(0.0)
+                game_result = -1.0
+
+            if self.use_random_mirorring == True and to_mirror == True:
+                game_result *= -1.0
+
+            result.append(game_result)
 
             moves_array = moves[str(idx)]
             moves_array = moves_array / moves_array.sum() # normalize for probabilities
+
+            if self.use_random_mirorring == True and to_mirror == True:
+                moves_array = self.mirror_moves(moves_array)
+
             moves_vector.append(moves_array)
 
         boards_torch = torch.Tensor(torch_boards).float()

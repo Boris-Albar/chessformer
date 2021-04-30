@@ -20,7 +20,7 @@ class ChessformerCheckpointer(pl.Callback):
         global_step = trainer.global_step
 
         if (epoch > 0) and (epoch % self.save_epoch_frequency == 0):
-            filename = f"{self.prefix}_{epoch=}_{global_step=}.ckpt"
+            filename = f"{self.prefix}_{epoch}.ckpt"
             filename_onnx = filename.replace(".ckpt", ".onnx")
             ckpt_path = os.path.join(self.checkpoint_dir, filename)
             trainer.save_checkpoint(ckpt_path)

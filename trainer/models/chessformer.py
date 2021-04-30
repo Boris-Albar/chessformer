@@ -12,7 +12,7 @@ from loss import ChessformerLoss
 
 class Chessformer(pl.LightningModule):
 
-    def __init__(self, dim, depth, heads, mlp_dim, pool = 'cls', channels = 3, dim_head = 64, dropout = 0., emb_dropout = 0., representation="chessformer", save_every=200):
+    def __init__(self, dim, depth, heads, mlp_dim, pool = 'cls', channels = 3, dim_head = 64, dropout = 0., emb_dropout = 0., representation="chessformer", balance_draw_ratio=None, ce_lambda=100, save_every=200):
 
         super().__init__()
 
@@ -24,6 +24,7 @@ class Chessformer(pl.LightningModule):
             self.num_classes = 4228 # including underpromotion
 
         self.batch_number = 0
+        self.ce_lambda = ce_lambda
         self.save_every = save_every
 
         self.embedding_dim = 15
@@ -37,7 +38,7 @@ class Chessformer(pl.LightningModule):
 
         self.transformer = Transformer(self.embedding_dim + self.pos_embedding_dim, depth, heads, dim_head, mlp_dim, dropout)
 
-        self.loss = ChessformerLoss(representation=representation)
+        self.loss = ChessformerLoss(representation=representation, balance_draw_ratio=balance_draw_ratio)
 
         self.pool = pool
         self.to_latent = nn.Identity()
@@ -73,10 +74,13 @@ class Chessformer(pl.LightningModule):
         board, result, moves = batch
         x = self.forward(board)
 
-        loss = self.loss(x, result, moves, num_moves=self.num_classes)
-        self.log('train_loss', loss, sync_dist=True)
+        loss_moves, loss_value = self.loss(x, result, moves)
+        self.log('train_loss_moves', loss_moves, sync_dist=True)
+        self.log('train_loss_value', loss_value, sync_dist=True)
+        #print(loss_moves)
+        #print(loss_value)
 
-        return loss
+        return {'loss': self.ce_lambda * loss_moves + loss_value, 'loss_moves': loss_moves, 'loss_value': loss_value}
 
     '''def configure_optimizers(self):
         optimizer = AdamW(self.parameters(), lr=self.learning_rate)
@@ -102,5 +106,5 @@ class Chessformer(pl.LightningModule):
             dynamic_axes={'input_board': {0: 'sequence'}, 'output_moves': {0: 'sequence'}})
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+        optimizer = torch.optim.Adam(self.parameters(), lr=1e-2)
         return optimizer
