@@ -80,6 +80,7 @@ fn create_trt_engine(
     file: OnnxFile,
     batch_size: i32,
     workspace_size: usize,
+    enable_fp16: bool
 ) -> Engine {
     let builder = Builder::new(&logger);
     builder.set_max_workspace_size(workspace_size);
@@ -88,6 +89,9 @@ fn create_trt_engine(
 
     builder.set_max_batch_size(batch_size);
     builder.set_max_workspace_size(workspace_size);
+    if enable_fp16 == true {
+        builder.set_fp16_mode(true);
+    }
 
     let parser = OnnxParser::new(&network, &logger);
     parser.parse_from_file(&file, verbosity).unwrap();
@@ -100,7 +104,7 @@ fn create_trt_engine(
 
 impl TrtInferer {
 
-    pub fn new(onnx_path: &str, gpu_number: u64, cache_size: usize, batch_size: usize, timeout: u64, enable_cache: bool) -> TrtInferer {
+    pub fn new(onnx_path: &str, gpu_number: u64, cache_size: usize, batch_size: usize, timeout: u64, enable_cache: bool, enable_fp16: bool) -> TrtInferer {
 
         /* Set up the gpu to use */
         env::set_var("CUDA_VISIBLE_DEVICES", gpu_number.to_string());
@@ -108,7 +112,7 @@ impl TrtInferer {
         let last_weights = get_last_weights(&onnx_path);
         let logger = Logger::new();
         let file = OnnxFile::new(&last_weights).expect("Failed to load onnx weights");
-        let engine = create_trt_engine(&logger, file, batch_size as i32, 1 * GB);
+        let engine = create_trt_engine(&logger, file, batch_size as i32, 2 * GB, enable_fp16);
 
         let context = engine.create_execution_context();
 

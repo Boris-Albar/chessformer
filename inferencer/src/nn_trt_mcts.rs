@@ -66,10 +66,10 @@ impl Evaluator<ChessformerTrtMCTS> for NNTrtEvaluator {
                 return (Vec::<f64>::new(), -1.0);
             }
         } else if status == ChessGameStatus::BlackWon {
-            if self.root_player == chess::Color::White {
-                return (Vec::<f64>::new(), -1.0);
-            } else {
+            if self.root_player == chess::Color::Black {
                 return (Vec::<f64>::new(), 1.0);
+            } else {
+                return (Vec::<f64>::new(), -1.0);
             }
         } else if status != ChessGameStatus::Ongoing {
             return (Vec::<f64>::new(), 0.0);
@@ -159,7 +159,6 @@ impl MCTS for ChessformerTrtMCTS {
     type TranspositionTable = ApproxTable<Self>;
 
     fn virtual_loss(&self) -> i64 {
-        // disable virtual loss
         self.v_loss
     }
 

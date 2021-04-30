@@ -200,6 +200,8 @@ fn thread_loop(thread_number: u64,
             virtual_loss, visits_before_expansion, stochastic_moves,
             stochastic_temperature, policy_temperature, dirichlet_epsilon, dirichlet_alpha,
             &syzygy_path, syzygy_stopping);
+
+        counter += 1;
     }
 }
 
@@ -248,6 +250,10 @@ fn main() {
                  .long("policy_temperature")
                  .takes_value(true)
                  .help("Temperature to apply on the probabilities vector of the NN"))
+        .arg(Arg::with_name("temperature_capture_check")
+                 .long("temperature_capture_check")
+                 .takes_value(true)
+                 .help("Temperature to apply on capture and check moves"))
         .arg(Arg::with_name("syzygy_path")
                  .long("syzygy_path")
                  .takes_value(true)
@@ -284,6 +290,10 @@ fn main() {
                  .long("gpu_number")
                  .takes_value(true)
                  .help("Number of the gpu to use"))
+        .arg(Arg::with_name("use_fp16")
+                 .long("use_fp16")
+                 .takes_value(false)
+                 .help("Use FP16 quantization"))
         .get_matches();
 
     let runner_name = Arc::new(matches.value_of("runner_name").unwrap_or("gpu0"));
@@ -300,6 +310,7 @@ fn main() {
     let dirichlet_alpha: f64 = matches.value_of("dirichlet_alpha").unwrap_or("0.3").parse().unwrap_or(0.3);
     let dirichlet_epsilon: f64 = matches.value_of("dirichlet_epsilon").unwrap_or("0.25").parse().unwrap_or(0.25);
     let policy_temperature: f64 = matches.value_of("policy_temperature").unwrap_or("0.75").parse().unwrap_or(0.75);
+    let temperature_capture_check: f64 = matches.value_of("temperature_capture_check").unwrap_or("0.1").parse().unwrap_or(0.1);
     let syzygy_path = Arc::new(matches.value_of("syzygy_path").unwrap_or(""));
     let syzygy_stopping = matches.is_present("syzygy_stopping");
     let batch_size: usize = matches.value_of("batch_size").unwrap_or("1").parse().unwrap_or(1);
@@ -308,13 +319,14 @@ fn main() {
     let cache_size: usize = matches.value_of("cache_size").unwrap_or("2048").parse().unwrap_or(2048);
     let max_games: usize = matches.value_of("max_games").unwrap_or("0").parse().unwrap_or(0) / (parallel_games as usize);
     let gpu_number: u64 = matches.value_of("gpu_number").unwrap_or("0").parse().unwrap_or(0);
+    let use_fp16 = matches.is_present("use_fp16");
 
     assert!(batch_size <= ((parallel_games as usize) * mcts_threads),
         "Batch size cannot be more than mcts_threads multiplied by parallel games.");
 
 
     let mut threads = Vec::new();
-    let trt_inferer_engine = TrtInferer::new(onnx_path, gpu_number, cache_size, batch_size, timeout, enable_cache);
+    let trt_inferer_engine = TrtInferer::new(onnx_path, gpu_number, cache_size, batch_size, timeout, enable_cache, use_fp16);
     let trt_inferer_ptr = Arc::new(trt_inferer_engine);
 
     for i in 0..parallel_games {
